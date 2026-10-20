@@ -321,10 +321,23 @@ pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
                     let (r, resp) = ui.allocate_exact_size(vec2(control_h, control_h), Sense::click());
                     if app.services.theme_switch {
                         let dark = app.ui_is_dark();
-                        if resp.hovered() {
-                            ui.painter().circle_filled(r.center(), control_h / 2.0 - 1.0, t.input);
+                        let bg = if resp.hovered() { t.input } else { t.title_bar };
+                        ui.painter().circle_filled(r.center(), control_h / 2.0 - 1.0, bg);
+                        let (c, rad) = (r.center(), control_h * 0.2);
+                        if dark {
+                            // A sun: click for light.
+                            let sun = egui::Color32::from_rgb(250, 204, 21);
+                            ui.painter().circle_filled(c, rad, sun);
+                            for k in 0..8 {
+                                let a = k as f32 * std::f32::consts::TAU / 8.0;
+                                let d = vec2(a.cos(), a.sin());
+                                ui.painter().line_segment([c + d * rad * 1.5, c + d * rad * 2.1], Stroke::new(1.5, sun));
+                            }
+                        } else {
+                            // A crescent moon: click for dark.
+                            ui.painter().circle_filled(c, rad * 1.6, t.text);
+                            ui.painter().circle_filled(c + vec2(rad * 0.9, -rad * 0.7), rad * 1.35, bg);
                         }
-                        icons::paint(ui.painter(), Rect::from_center_size(r.center(), vec2(16.0, 16.0)), "darkMode", t.text, t.text);
                         let tip = if dark { tl!("Switch to light mode") } else { tl!("Switch to dark mode") };
                         resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tip));
                         if resp.on_hover_text(tip).clicked() {
