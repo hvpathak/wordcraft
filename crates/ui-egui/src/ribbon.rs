@@ -2231,8 +2231,13 @@ fn outlining(app: &mut WordApp, ui: &mut Ui) {
 
 fn help(app: &mut WordApp, ui: &mut Ui) {
     group(ui, "Help", None, app, |ui, app| {
-        big(ui, app, "help", "Help", "ui.dialog", json!({"name": "about"}), false);
-        big(ui, app, "discord", "Community\nDiscord", "ui.discord", json!({}), false);
+        big(ui, app, "help", "Help", "ui.help", json!({}), false);
+        if !app.services.hide_community {
+            big(ui, app, "discord", "Community\nDiscord", "ui.discord", json!({}), false);
+        } else if app.services.community_url.is_some() {
+            // The host's own community page (an embedding app's project page, say).
+            big(ui, app, "share", "Feedback", "ui.discord", json!({}), false);
+        }
     });
     group(ui, "Agents", None, app, |ui, app| {
         big(ui, app, "macros", "Commands", "ui.dialog", json!({"name": "commands"}), false);

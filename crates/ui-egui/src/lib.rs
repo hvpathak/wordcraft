@@ -96,6 +96,14 @@ pub use file_dialogs::{FileDialogAnswer, FileDialogRequest, open_filters};
 /// Platform services injected by the host (file dialogs, file I/O).
 #[derive(Default)]
 pub struct Services {
+    /// An app that embeds the editor (such as HarshPad) can send Help to its own page instead of
+    /// the About window, and the community button to its own page instead of Discord.
+    pub help_url: Option<String>,
+    pub community_url: Option<String>,
+    /// Hide the community links (title bar pill, File menu footer, Help tab button).
+    pub hide_community: bool,
+    /// Show a light/dark switch in the title bar where the account button is.
+    pub theme_switch: bool,
     /// Desktop: discover configured printers on a worker.
     pub printers: Option<printing::Discover>,
     /// Desktop: submit the PDF with the chosen settings on a worker.
@@ -1681,7 +1689,16 @@ impl WordApp {
                 ));
             }
             "ui.discord" => {
-                self.canvas.open_url = Some("https://discord.gg/artcraft".into());
+                let url = self.services.community_url.clone().unwrap_or_else(|| "https://discord.gg/artcraft".into());
+                self.canvas.open_url = Some(url);
+                json!({})
+            }
+            "ui.help" => {
+                // The host's help page, or the About window.
+                match self.services.help_url.clone() {
+                    Some(url) => self.canvas.open_url = Some(url),
+                    None => self.dialog = crate::dialogs::Dialog::open("about", self),
+                }
                 json!({})
             }
             "ui.caretAnimation" => {
@@ -2616,6 +2633,7 @@ pub(crate) fn works_without_document(id: &str) -> bool {
             | "ui.fileBrowser"
             | "ui.makeDefaultApp"
             | "ui.discord"
+            | "ui.help"
             | "ui.caretAnimation"
             | "ui.startScreen"
     ) || id.starts_with("help.")
